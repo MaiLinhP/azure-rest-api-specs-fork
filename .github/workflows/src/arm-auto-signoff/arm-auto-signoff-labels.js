@@ -7,5 +7,5 @@ export const ArmAutoSignoffLabel = Object.freeze({
   ArmSignedOff: "ARMSignedOff",
   ArmAutoSignedOff: "ARMAutoSignedOff",
   ArmAutoSignedOffIncrementalTSP: "ARMAutoSignedOff-IncrementalTSP",
-  ArmAutoSignedOffTrivial: "ARMAutoSignedOff-Trivial",
+  ArmAutoSignedOffTrivialTest: "ARMAutoSignedOff-Trivial-Test",
 });

@@ -1,19 +1,20 @@
 import "@azure-tools/typespec-azure-core";
 import "@azure-tools/typespec-azure-resource-manager";
+import "@typespec/openapi";
 import "@typespec/rest";
-import "./models.tsp";
+import "@typespec/http";
+import "@azure-tools/typespec-azure-resource-manager";
 
 using TypeSpec.Rest;
 using Azure.ResourceManager;
 using TypeSpec.Versioning;
 
+@armProviderNamespace("Microsoft.AzureStackHCI")
 namespace Microsoft.AzureStackHCI;
 
-/**
- * Represents a os image resource.
- */
+@doc("Represents a os image resource.")
 @parentResource(SubscriptionLocationResource)
-@added(Versions.v2026_03_01_preview)
+@added(Versions.v2026_02_15_preview)
 model OsImage is Azure.ResourceManager.ProxyResource<OsImageProperties> {
   ...ResourceNameParameter<
     Resource = OsImage,
@@ -22,15 +23,28 @@ model OsImage is Azure.ResourceManager.ProxyResource<OsImageProperties> {
 }
 
 @armResourceOperations
-@added(Versions.v2026_03_01_preview)
+@added(Versions.v2026_02_15_preview)
 interface OsImages {
-  /**
-   * Get a os image.
-   */
+  @doc("Get a os image.")
   get is ArmResourceRead<OsImage>;
 
-  /**
-   * List all os images.
-   */
+  @doc("List all os images.")
   list is ArmResourceListAtScope<OsImage>;
+}
+
+#suppress "@azure-tools/typespec-azure-resource-manager/arm-resource-provisioning-state"
+@doc("Represents properties of a os image resource.")
+@added(Versions.v2026_02_15_preview)
+model OsImageProperties {
+  @doc("Represents validated solution recipe version of a os image.")
+  validatedSolutionRecipeVersion?: string;
+
+  @doc("Represents composed image version of a os image.")
+  composedImageVersion?: string;
+
+  @doc("Represents composed image iso download url of a os image.")
+  composedImageIsoUrl?: string;
+
+  @doc("Represents composed image iso hash of a os image.")
+  composedImageIsoHash?: string;
 }

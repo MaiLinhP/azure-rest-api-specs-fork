@@ -133,10 +133,8 @@ export function processTypeSpecProjectsV2FolderStructure(
   return changedSpecs;
 }
 
-export async function detectChangedSpecConfigFiles(
-  commandInput: SpecGenSdkCmdInput,
-): Promise<ChangedSpecs[]> {
-  const prChangedFiles: string[] = await getChangedFiles(commandInput.localSpecRepoPath);
+export function detectChangedSpecConfigFiles(commandInput: SpecGenSdkCmdInput): ChangedSpecs[] {
+  const prChangedFiles: string[] = getChangedFiles(commandInput.localSpecRepoPath) ?? [];
   if (prChangedFiles.length === 0) {
     logMessage("No files changed in the PR");
   }
@@ -166,7 +164,6 @@ export async function detectChangedSpecConfigFiles(
     searchFileRegex: typespecProjectRegex,
     specRepoFolder: commandInput.localSpecRepoPath,
     stopAtFolder: "specification",
-    findAll: true,
   });
 
   const typespecProjectSharedLibraries = searchSharedLibrary(fileList, {

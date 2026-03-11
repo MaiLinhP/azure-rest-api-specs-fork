@@ -21,19 +21,13 @@ export async function main() {
   if (!existsSync(logFolder)) {
     mkdirSync(logFolder, { recursive: true });
   }
-  let statusCode: number;
-  try {
-    if (batchType) {
-      statusCode = await generateSdkForBatchSpecs(batchType);
-    } else if (pullRequestNumber) {
-      statusCode = await generateSdkForSpecPr();
-    } else {
-      statusCode = await generateSdkForSingleSpec();
-    }
-  } catch (error) {
-    console.error("Unhandled exception in spec-gen-sdk-runner:", error);
-    console.log("##vso[task.complete result=Failed;]");
-    exit(1);
+  let statusCode = 0;
+  if (batchType) {
+    statusCode = await generateSdkForBatchSpecs(batchType);
+  } else if (pullRequestNumber) {
+    statusCode = await generateSdkForSpecPr();
+  } else {
+    statusCode = await generateSdkForSingleSpec();
   }
   if (statusCode !== 0) {
     console.log("##vso[task.complete result=Failed;]");

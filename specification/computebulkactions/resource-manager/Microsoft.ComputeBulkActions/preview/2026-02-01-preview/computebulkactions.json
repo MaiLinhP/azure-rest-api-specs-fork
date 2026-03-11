@@ -2592,7 +2592,7 @@
           {
             "name": "SSD",
             "value": "SSD",
-            "description": "SSD DiskType."
+            "description": "SDD DiskType."
           }
         ]
       }

@@ -16,7 +16,7 @@ namespace Microsoft.AzureStackHCI;
 /**
  * Cluster Jobs resource
  */
-@added(Versions.v2026_03_01_preview)
+@added(Versions.v2026_02_15_preview)
 @parentResource(Cluster)
 model ClusterJob is Azure.ResourceManager.ProxyResource<ClusterJobProperties> {
   ...ResourceNameParameter<
@@ -30,7 +30,7 @@ model ClusterJob is Azure.ResourceManager.ProxyResource<ClusterJobProperties> {
 /**
  * ClusterJobs operations
  */
-@added(Versions.v2026_03_01_preview)
+@added(Versions.v2026_02_15_preview)
 @armResourceOperations
 interface ClusterJobs {
   /** Get a ClusterJob */
@@ -49,4 +49,46 @@ interface ClusterJobs {
   >;
 }
 
+/** Cluster Job properties */
+@added(Versions.v2026_02_15_preview)
+@discriminator("jobType")
+model ClusterJobProperties {
+  /** Job Type to support polymorphic resource. */
+  @visibility(Lifecycle.Create, Lifecycle.Read)
+  jobType: HciJobType;
+
+  /** Deployment mode to trigger job. */
+  deploymentMode?: DeploymentMode = DeploymentMode.Deploy;
+
+  /** Job provisioning state */
+  @visibility(Lifecycle.Read)
+  provisioningState?: ProvisioningState;
+
+  /** Unique, immutable job id. */
+  @visibility(Lifecycle.Read)
+  jobId?: string;
+
+  /** The UTC date and time at which the job started. */
+  @visibility(Lifecycle.Read)
+  startTimeUtc?: utcDateTime;
+
+  /** The UTC date and time at which the job completed. */
+  @visibility(Lifecycle.Read)
+  endTimeUtc?: utcDateTime;
+
+  /** Status of Cluster job. */
+  @visibility(Lifecycle.Read)
+  status?: JobStatus;
+
+  /** Reported properties for job */
+  @visibility(Lifecycle.Read)
+  reportedProperties?: JobReportedProperties;
+}
+
 @@doc(ClusterJob.name, "Name of ClusterJob");
+
+/**
+ * List of Cluster Job resources for the HCI cluster.
+ */
+@added(Versions.v2026_02_15_preview)
+model ClusterJobListResult is Azure.Core.Page<ClusterJob>;

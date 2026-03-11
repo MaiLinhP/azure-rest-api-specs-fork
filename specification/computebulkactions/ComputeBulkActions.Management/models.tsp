@@ -199,7 +199,7 @@ union LocalStorageDiskType {
   @doc("HDD DiskType.")
   HDD: "HDD",
 
-  @doc("SSD DiskType.")
+  @doc("SDD DiskType.")
   SSD: "SSD",
 }
 

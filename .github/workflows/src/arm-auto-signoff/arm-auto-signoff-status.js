@@ -17,7 +17,7 @@ import { ArmAutoSignoffLabel } from "./arm-auto-signoff-labels.js";
  * @typedef {{
  *   "ARMSignedOff": LabelAction,
  *   "ARMAutoSignedOff-IncrementalTSP": LabelAction,
- *   "ARMAutoSignedOff-Trivial": LabelAction,
+ *   "ARMAutoSignedOff-Trivial-Test": LabelAction,
  * }} ManagedLabelActions
  */
 
@@ -26,7 +26,7 @@ function createNoneLabelActions() {
   return {
     [ArmAutoSignoffLabel.ArmSignedOff]: LabelAction.None,
     [ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP]: LabelAction.None,
-    [ArmAutoSignoffLabel.ArmAutoSignedOffTrivial]: LabelAction.None,
+    [ArmAutoSignoffLabel.ArmAutoSignedOffTrivialTest]: LabelAction.None,
   };
 }
 
@@ -99,16 +99,21 @@ export async function getLabelActionImpl({ owner, repo, issue_number, head_sha, 
   });
   const labelNames = labels.map((label) => label.name);
 
-  // Check if any auto sign-off labels are currently present.
-  // Used to determine whether ARMSignedOff was auto-added (vs manually added)
-  // and whether removal is needed when the PR no longer qualifies.
+  // Check if any auto sign-off labels are currently present
+  // Only proceed with auto sign-off logic if auto labels exist or we're about to add them
   const hasAutoSignedOffLabels =
-    // need to consider the legacy label
     labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOff) ||
     labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP) ||
-    labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOffTrivial);
+    labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOffTrivialTest);
+
+  // Track if ARMSignedOff was auto-added (IncrementalTSP present) vs manually added
+  const hasAutoAddedArmSignedOff =
+    // need to consider the legacy label
+    labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOff) ||
+    labelNames.includes(ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP);
   core.info(`Labels: ${inspect(labelNames)}`);
   core.info(`Has auto signed-off labels: ${hasAutoSignedOffLabels}`);
+  core.info(`Has auto-added ARMSignedOff: ${hasAutoAddedArmSignedOff}`);
 
   // permissions: { actions: read }
   /** @type {WorkflowRun[]} */
@@ -138,14 +143,19 @@ export async function getLabelActionImpl({ owner, repo, issue_number, head_sha, 
       return noneResult;
     }
 
-    // Auto sign-off labels are present, so ARMSignedOff was auto-added. Remove all.
+    // Only remove ARMSignedOff if it was auto-added (IncrementalTSP present)
+    // Preserve manually-added ARMSignedOff labels
     return {
       ...noneResult,
       labelActions: {
         ...noneLabelActions,
-        [ArmAutoSignoffLabel.ArmSignedOff]: LabelAction.Remove,
-        [ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP]: LabelAction.Remove,
-        [ArmAutoSignoffLabel.ArmAutoSignedOffTrivial]: LabelAction.Remove,
+        [ArmAutoSignoffLabel.ArmSignedOff]: hasAutoAddedArmSignedOff
+          ? LabelAction.Remove
+          : LabelAction.None,
+        [ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP]: hasAutoAddedArmSignedOff
+          ? LabelAction.Remove
+          : LabelAction.None,
+        [ArmAutoSignoffLabel.ArmAutoSignedOffTrivialTest]: LabelAction.Remove,
       },
     };
   };
@@ -219,10 +229,20 @@ export async function getLabelActionImpl({ owner, repo, issue_number, head_sha, 
     requiredStatuses.every((status) => status.state === CommitStatusState.SUCCESS)
   ) {
     core.info("All requirements met for auto-signoff");
-    const autoIncrementalTSPAction = armAnalysisResult.incrementalTypeSpec
+    const autoIncrementalTSP = armAnalysisResult.incrementalTypeSpec;
+    const autoTrivialTest = armAnalysisResult.isTrivial;
+
+    // Add ARMSignOff label only when the PR is identified as an incremental typespec
+    // As the trivial changes sign-off is being released in test mode
+    // Only remove ARMSignedOff if it was auto-added (IncrementalTSP present)
+    // Preserve manually-added ARMSignedOff labels
+    const armSignOffAction = autoIncrementalTSP
       ? LabelAction.Add
-      : LabelAction.Remove;
-    const trivialAction = armAnalysisResult.isTrivial ? LabelAction.Add : LabelAction.Remove;
+      : hasAutoAddedArmSignedOff
+        ? LabelAction.Remove
+        : LabelAction.None;
+    const autoIncrementalTSPAction = autoIncrementalTSP ? LabelAction.Add : LabelAction.Remove;
+    const testTrivialAction = autoTrivialTest ? LabelAction.Add : LabelAction.Remove;
 
     // Keep labels in sync with current analysis results.
     // When a label is not desired, emit Remove so it gets cleaned up if previously set.
@@ -230,9 +250,9 @@ export async function getLabelActionImpl({ owner, repo, issue_number, head_sha, 
       ...baseResult,
       labelActions: {
         ...noneLabelActions,
-        [ArmAutoSignoffLabel.ArmSignedOff]: LabelAction.Add,
+        [ArmAutoSignoffLabel.ArmSignedOff]: armSignOffAction,
         [ArmAutoSignoffLabel.ArmAutoSignedOffIncrementalTSP]: autoIncrementalTSPAction,
-        [ArmAutoSignoffLabel.ArmAutoSignedOffTrivial]: trivialAction,
+        [ArmAutoSignoffLabel.ArmAutoSignedOffTrivialTest]: testTrivialAction,
       },
     };
   }

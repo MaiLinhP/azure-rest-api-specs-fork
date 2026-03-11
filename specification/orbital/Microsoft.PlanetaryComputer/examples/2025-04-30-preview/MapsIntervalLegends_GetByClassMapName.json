@@ -1,9 +1,9 @@
 {
-  "title": "MapsIntervalLegends_GetByClassMapName",
-  "operationId": "MapsIntervalLegends_GetByClassMapName",
+  "title": "MapsIntervalLegends_GetByClassmapName",
+  "operationId": "MapsIntervalLegends_GetByClassmapName",
   "parameters": {
-    "classmapName": "modis-64A1",
-    "api-version": "2025-04-30-preview"
+    "api-version": "2025-04-30-preview",
+    "classmapName": "modis-64A1"
   },
   "responses": {
     "200": {
@@ -165,6 +165,7 @@
           ]
         ]
       ]
-    }
+    },
+    "204": {}
   }
 }
